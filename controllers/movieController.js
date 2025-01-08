@@ -17,11 +17,11 @@ function index(req, res) {
 
   const titleQuery = req.query.title.trim();
 
-  console.log(titleQuery);
-
   //filtro per titolo o parte di titolo
   if (titleQuery) {
     sql += ` WHERE movies.title LIKE ?`;
+  } else if (titleQuery.length < 1) {
+    return res.status(400).json({ message: 'bad request' });
   }
 
   connection.query(sql, `%${titleQuery}%`, callback);
