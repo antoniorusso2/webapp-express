@@ -20,7 +20,7 @@ app.use('/api/movies', moviesRouter);
 
 //middlewares use
 
-// app.use('/', errorsHandler);
+app.use('/', errorsHandler);
 app.use('/', notFound);
 
 app.listen(port, () => {
