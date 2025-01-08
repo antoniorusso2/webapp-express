@@ -1,6 +1,18 @@
 const connection = require('../data/db');
 
 function index(req, res) {
+  const callback = (error, results) => {
+    if (error) return res.status(500).json({ massage: err.message });
+
+    if (results.length === 0)
+      return res.status(404).json({
+        error: 'not found',
+        message: 'movie not found',
+      });
+
+    res.json(results);
+  };
+
   let sql = `SELECT * FROM movies_db.movies`;
 
   const titleQuery = req.query.title.trim();
@@ -9,18 +21,10 @@ function index(req, res) {
 
   //filtro per titolo o parte di titolo
   if (titleQuery) {
-    sql = `SELECT * FROM movies_db.movies WHERE movies.title LIKE '%${titleQuery}%'`;
+    sql += ` WHERE movies.title LIKE ?`;
   }
 
-  connection.query(sql, (err, movies) => {
-    if (err) return res.status(500).json({ message: err.message });
-    if (movies.length === 0)
-      return res.status(404).json({
-        error: 'not found',
-        message: 'movie not found',
-      });
-    res.json(movies);
-  });
+  connection.query(sql, `%${titleQuery}%`, callback);
 }
 
 function show(req, res) {
@@ -29,17 +33,7 @@ function show(req, res) {
 
   const sql = `SELECT * FROM movies_db.movies WHERE movies.id = ?`;
 
-  connection.query(sql, [id], (err, result) => {
-    if (err) return res.status(500).json({ massage: err.message });
-
-    if (result.length === 0)
-      return res.status(404).json({
-        error: 'not found',
-        message: 'movie not found',
-      });
-
-    res.json(result);
-  });
+  connection.query(sql, [id], callback);
 
   //show per le recensioni
 }
