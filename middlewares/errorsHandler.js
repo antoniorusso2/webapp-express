@@ -1,4 +1,5 @@
-function errorsHandler(err, _, res) {
+function errorsHandler(err, req, res) {
+  console.log(req);
   if (err)
     res.status(500).json({
       message: err.message,

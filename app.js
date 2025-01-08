@@ -1,5 +1,3 @@
-console.log('app');
-
 //express basic vars
 const express = require('express');
 const app = express();
@@ -9,14 +7,20 @@ const port = 3000;
 const notFound = require('./middlewares/notFound');
 const errorsHandler = require('./middlewares/errorsHandler');
 
+//router
+const moviesRouter = require('./routers/moviesRouter');
+
+app.use(express.static('public/imgs')); //public files in public/img
+
 app.get('/', (req, res) => {
   res.send('server running');
 });
 
-//middlewares use
-app.use(express.static('public/imgs')); //public files in public/img
+app.use('/api/movies', moviesRouter);
 
-app.use('/', errorsHandler);
+//middlewares use
+
+// app.use('/', errorsHandler);
 app.use('/', notFound);
 
 app.listen(port, () => {
