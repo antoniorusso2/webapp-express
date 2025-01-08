@@ -24,6 +24,9 @@ function index(req, res) {
     connection.query(sql, `%${titleQuery.trim()}%`, callback);
     return;
   }
+
+  //ordine alfabetico per titolo
+  sql += ` ORDER BY title`;
   //ricerca di tutti i post normalmente
   connection.query(sql, callback);
 }
