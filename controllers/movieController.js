@@ -3,6 +3,19 @@ const connection = require('../data/db');
 function index(req, res) {
   const callback = (error, results) => {
     if (error) return res.status(500).json({ massage: err.message });
+    // results.image: 'localhost:3003/movies-covers/inception.jpg'
+    console.log(results);
+
+    //aggiunta immagini ad ogni elemento dell'array
+    results.forEach((el) => {
+      //path di base immagini in local host
+      const baseImagePath = 'http://localhost:3003/movies-covers';
+      //formattazione del titolo dell'immagine con lettere minuscole e _ invece di spazi
+      const imagePath = el.title.trim().replaceAll(' ', '_').toLowerCase();
+
+      //aggiunta chiave image all'oggetto
+      el.image = `${baseImagePath}/${imagePath}.jpg`;
+    });
 
     if (results.length === 0)
       return res.status(404).json({
@@ -35,19 +48,6 @@ function show(req, res) {
   //recupero parametro dinamico da url
   const id = req.params.id;
 
-  // const callback = (error, results) => {
-  //   if (error) return res.status(500).json({ massage: err.message });
-
-  //   if (results.length === 0)
-  //     return res.status(404).json({
-  //       error: 'not found',
-  //       message: 'movie not found',
-  //     });
-
-  //   res.json(results);
-
-  // };
-
   const sql = `SELECT * FROM movies_db.movies WHERE movies.id = ?`;
 
   connection.query(sql, [id], (err, results) => {
@@ -64,9 +64,11 @@ function show(req, res) {
 
     const reviewSQL = `SELECT * FROM movies_db.reviews WHERE movie_id = ?`;
 
+    //aggiunta reviews all'oggetto
     connection.query(reviewSQL, [id], (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
 
+      //aggiungo la chiave reviews all'oggetto movies
       movie.reviews = results;
       res.json(movie);
     });

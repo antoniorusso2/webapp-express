@@ -16,9 +16,8 @@ app.get('/', (req, res) => {
   res.send('server running');
 });
 
-app.use('/api/movies', moviesRouter);
-
 //middlewares use
+app.use('/api/movies', moviesRouter);
 
 app.use('/', errorsHandler);
 app.use('/', notFound);
