@@ -1,5 +1,5 @@
 const connection = require('../data/db');
-
+const baseImagePath = 'http://localhost:3003/movies-covers/';
 function index(req, res) {
   const callback = (error, results) => {
     if (error) return res.status(500).json({ massage: err.message });
@@ -9,12 +9,11 @@ function index(req, res) {
     //aggiunta immagini ad ogni elemento dell'array
     results.forEach((el) => {
       //path di base immagini in local host
-      const baseImagePath = 'http://localhost:3003/movies-covers';
+
       //formattazione del titolo dell'immagine con lettere minuscole e _ invece di spazi
-      const imagePath = el.title.trim().replaceAll(' ', '_').toLowerCase();
 
       //aggiunta chiave image all'oggetto
-      el.image = `${baseImagePath}/${imagePath}.jpg`;
+      el.image = `${baseImagePath}/${el.image}`;
     });
 
     if (results.length === 0)
@@ -26,7 +25,11 @@ function index(req, res) {
     res.json(results);
   };
 
-  let sql = `SELECT * FROM movies_db.movies`;
+  let sql = `
+    SELECT movies.*, AVG(vote) as avg_vote
+    FROM movies_db.movies
+    JOIN movies_db.reviews
+    ON movies.id = reviews.movie_id`;
 
   const titleQuery = req.query.title;
 
@@ -39,7 +42,9 @@ function index(req, res) {
   }
 
   //ordine alfabetico per titolo
-  sql += ` ORDER BY title`;
+  sql += `
+    GROUP BY movies.id
+    ORDER BY title;`;
   //ricerca di tutti i post normalmente
   connection.query(sql, callback);
 }
@@ -48,7 +53,12 @@ function show(req, res) {
   //recupero parametro dinamico da url
   const id = req.params.id;
 
-  const sql = `SELECT * FROM movies_db.movies WHERE movies.id = ?`;
+  const sql = `SELECT movies.*, AVG(vote) as avg_vote
+    FROM movies_db.movies
+    JOIN movies_db.reviews
+    ON movies.id = movies.id
+    WHERE movies.id = ?
+    GROUP BY movies.id`;
 
   connection.query(sql, [id], (err, results) => {
     if (err) return res.status(500).json({ massage: err.message });
@@ -61,7 +71,9 @@ function show(req, res) {
     }
 
     const movie = results[0];
+    movie.image = `${baseImagePath}/${movie.image}`;
 
+    //reviews del film
     const reviewSQL = `SELECT * FROM movies_db.reviews WHERE movie_id = ?`;
 
     //aggiunta reviews all'oggetto
