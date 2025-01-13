@@ -2,16 +2,11 @@ const connection = require('../data/db');
 const baseImagePath = 'http://localhost:3003/movies-covers/';
 function index(req, res) {
   const callback = (error, results) => {
-    if (error) return res.status(500).json({ massage: err.message });
-    // results.image: 'localhost:3003/movies-covers/inception.jpg'
+    if (error) return res.status(500).json({ message: error.message });
     console.log(results);
 
     //aggiunta immagini ad ogni elemento dell'array
     results.forEach((el) => {
-      //path di base immagini in local host
-
-      //formattazione del titolo dell'immagine con lettere minuscole e _ invece di spazi
-
       //aggiunta chiave image all'oggetto
       el.image = `${baseImagePath}/${el.image}`;
     });
@@ -27,16 +22,20 @@ function index(req, res) {
 
   let sql = `
     SELECT movies.*, AVG(vote) as avg_vote
-    FROM movies_db.movies
-    JOIN movies_db.reviews
+    FROM movies
+    JOIN reviews
     ON movies.id = reviews.movie_id`;
 
+  //recupero parametro query string
   const titleQuery = req.query.title;
 
   //filtro per titolo o parte di titolo
   if (titleQuery) {
     //concatenazione query sql in caso il campo esista
-    sql += ` WHERE movies.title LIKE ?`;
+    sql += ` 
+      WHERE movies.title LIKE ?
+      GROUP BY movies.id
+      ORDER BY movies.title;`;
     connection.query(sql, `%${titleQuery.trim()}%`, callback);
     return;
   }
@@ -44,8 +43,9 @@ function index(req, res) {
   //ordine alfabetico per titolo
   sql += `
     GROUP BY movies.id
-    ORDER BY title;`;
+    ORDER BY movies.title;`;
   //ricerca di tutti i post normalmente
+  console.log(sql);
   connection.query(sql, callback);
 }
 
@@ -74,10 +74,10 @@ function show(req, res) {
     movie.image = `${baseImagePath}/${movie.image}`;
 
     //reviews del film
-    const reviewSQL = `SELECT * FROM movies_db.reviews WHERE movie_id = ?`;
+    const reviewsQuery = `SELECT * FROM movies_db.reviews WHERE movie_id = ?`;
 
     //aggiunta reviews all'oggetto
-    connection.query(reviewSQL, [id], (err, results) => {
+    connection.query(reviewsQuery, [id], (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
 
       //aggiungo la chiave reviews all'oggetto movies
@@ -86,9 +86,31 @@ function show(req, res) {
     });
   });
 
-  connection;
-
   //show per le recensioni
 }
 
-module.exports = { index, show };
+//store per l' aggiunta di una nuova recensione
+function storeReview(req, res) {
+  //id del film
+  const id = req.params.id;
+
+  //controllo se i campi testo e nome sono presenti
+  if (!name || !vote) return res.status(400).json({ error: 'Missing required fields', message: 'name and vote are required' });
+
+  //recupero parametri dalla body request
+  const { name, text, vote } = req.body;
+  // console.log(req.body, id);
+
+  //query
+  const sql = `INSERT INTO reviews (name, text, vote, movie_id) VALUES (?,?,?,?)`;
+
+  connection.query(sql, [name, text, vote, id], (err, results) => {
+    if (err) return res.status(500).json({ message: err.message });
+
+    console.log(results);
+
+    res.status(201).json({ message: 'review created successfully', newId: results.insertId });
+  });
+}
+
+module.exports = { index, show, storeReview };
