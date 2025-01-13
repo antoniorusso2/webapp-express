@@ -5,15 +5,15 @@ const port = process.env.PORT || 3000;
 
 //corsPolicy
 const cors = require('cors');
+
 //middlewares
+//body-parser
+app.use(express.json());
 const notFound = require('./middlewares/notFound');
 const errorsHandler = require('./middlewares/errorsHandler');
 
 //router
 const moviesRouter = require('./routers/moviesRouter');
-
-//body-parser
-app.use(express.json());
 
 //config
 app.use(cors());
@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
 //middlewares use
 app.use('/api/movies', moviesRouter);
 
-app.use('/', errorsHandler);
+app.use('/', errorsHandler); //? errore in post per la creazione di una nuova recensione non viene rilevato
 app.use('/', notFound);
 
 app.listen(port, () => {
